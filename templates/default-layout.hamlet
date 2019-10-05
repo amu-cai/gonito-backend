@@ -1,60 +1,47 @@
-  $maybe banner <- mBanner
-    <div class="header-row" id="header-row" style="padding: 0px; overflow:hidden;">
-      <div class="container-fluid" style="padding: 0px;">
-        <div class="row">
-           <div class="col-xs-12">
-              <img src="#{banner}">
-  <nav class="navbar navbar-default navbar-fixed-top">
-    <div class="container-fluid">
-          <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-               <span class="icon-bar">
-               <span class="icon-bar">
-               <span class="icon-bar">
-            <a class="navbar-brand" href="@{HomeR}">PolEval 2020
-               $maybe location <- appLocation $ appSettings master
-                   $if location /= ""
-                      \@#{location}
-        $maybe user <- maybeUser
-          <ul class="nav navbar-nav navbar-top navbar-collapse collapse">
-                <li><a href="@{ListChallengesR}">Tasks</a>
-                <li><a href="@{PolEvalDatesR}">Dates</a>
-                <li><a href="@{PolEvalResultsR}">Results</a>
-                <li><a href="@{PolEvalPrizesR}">Prizes</a>
-                <li><a href="@{PolEvalPublicationR}">Publication</a>
-                <li><a href="@{PolEvalOrganizersR}">Organizers</a>
-                <li><a href="http://2019.poleval.pl/">PolEval 2019</a>
-                $if userIsAdmin $ entityVal user
-                    <li class="dropdown">
-                        <a id="admin" href="#" class="dropdown-toggle" data-toggle="dropdown">_{MsgManage}<span class="caret"></span>
-                        <ul class="dropdown-menu">
-                            <li><a href="@{CreateChallengeR}">_{MsgCreateChallenge}</a>
-                            <li><a href="@{CreateResetLinkR}">_{MsgCreateResetLink}</a>
-                            <li><a href="@{ListArchivedChallengesR}">_{MsgShowArchivedChallenges}</a>
+<div id="main-container" class="container_24">
+  <div id="header">
+    <h1>
+       <a title="Home" href="/">POLEVAL 2020
+    <ul class="nav navbar-top">
+       <li><a href="/">Home</a>
+       <li><a href="@{ListChallengesR}">Tasks</a>
+       <li><a href="@{PolEvalDatesR}">Dates</a>
+       <li><a href="@{PolEvalResultsR}">Results</a>
+       <li><a href="@{PolEvalPrizesR}">Prizes</a>
+       <li><a href="@{PolEvalPublicationR}">Publication</a>
+       <li><a href="@{PolEvalOrganizersR}">Organizers</a>
+       <li><a href="http://2019.poleval.pl">2019</a>
 
-          <ul class="nav navbar-nav navbar-collapse collapse navbar-right">
-            <li class="dropdown">
-                <a href="@{AuthR LoginR}" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">#{userIdent $ entityVal user}<span class="caret"></span>
-                <ul class="dropdown-menu">
-                    <li><a href="@{YourAccountR}">_{MsgYourAccount}</a></li>
-                    <li><a href="@{AuthR LogoutR}">_{MsgLogOut}</a></li>
-        $nothing
-            <ul class="nav navbar-nav navbar-top navbar-collapse collapse">
-                <li><a href="@{ListChallengesR}">Tasks</a>
-                <li><a href="@{PolEvalDatesR}">Dates</a>
-                <li><a href="@{PolEvalResultsR}">Results</a>
-                <li><a href="@{PolEvalPrizesR}">Prizes</a>
-                <li><a href="@{PolEvalPublicationR}">Publication</a>
-                <li><a href="@{PolEvalOrganizersR}">Organizers</a>
-                <li><a href="http://2019.poleval.pl/">PolEval 2019</a>
+    $maybe banner <- mBanner
+      <div id="header-image">
+         <img border="0" class="ccm-image-block" alt="" src="#{banner}" width="960" height="212">
 
-            <ul class="nav navbar-nav navbar-collapse collapse navbar-right">
-                <li><a href="@{AuthR LoginR}">log in</a>
+  <div class="clear">
 
-$maybe msg <- mmsg
-    <div #message .alert .alert-warning><a href="#" class="close" data-dismiss="alert">&times;</a> #{msg}
+  <div class="clear">
 
-$maybe rightPanel <- mRightPanel
-  <div class="pull-right">^{rightPanel}
+  $maybe rightPanel <- mRightPanel
+    <div id="main-content-container" class="grid_16">
+      <div id="main-content-inner">
+        ^{widget}
 
-^{widget}
+    <div id="right-sidebar-container" class="grid_8">
+       <div id="right-sidebar-inner">
+          ^{rightPanel}
+  $nothing
+    <div id="main-content-container" class="grid_24">
+      <div id="main-content-inner">
+        ^{widget}
+
+  <div class="clear">
+
+  <div id="footer">
+    <div id="footer-inner">
+      <p class="footer-sign-in">
+        <span class="sign-in">
+          <a href="@{AuthR LoginR}">log in
+
+      <div class="clear">
+      <p class="footer-copyright">#{appCopyright $ appSettings master}
+
+      $maybe analytics <- appAnalytics $ appSettings master

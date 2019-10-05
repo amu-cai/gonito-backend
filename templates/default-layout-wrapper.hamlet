@@ -12,6 +12,13 @@ $newline never
     <meta name="description" content="">
     <meta name="author" content="">
 
+     <link rel="stylesheet" type="text/css" href="/static/css/reset.css"/>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+          integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css"
+          integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+
     <!--datatables, including JQuery-->
     <link rel="stylesheet" type="text/css" href="/static/css/datatables.min.css"/>
     <link rel="stylesheet" type="text/css" href="/static/css/c3.min.css"/>
@@ -25,10 +32,14 @@ $newline never
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js">
     <script type="text/javascript" src="/static/js/extra.js">
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
-          integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css"
-          integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/static/css/ccm.base.css" />
+
+    <link rel="stylesheet" type="text/css" href="/static/css/text.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/960_24_col.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/main.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/css/typography.css"/>
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Merriweather:400,700,900,300"/>
+
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous">
 
     <link rel="stylesheet" href="/static/css/tagify.css">
@@ -45,22 +56,4 @@ $newline never
     <script>
       document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/,'js');
   <body>
-    <div class="container-fluid">
-      <header>
-      <div id="main" role="main">
-        ^{pageBody pc}
-
-    <footer class="footer" style="padding-top: 30px">
-       <div class="container-fluid">
-         <p class="text-muted">#{appCopyright $ appSettings master}
-
-    $maybe analytics <- appAnalytics $ appSettings master
-      <script>
-        if(!window.location.href.match(/localhost/)){
-          window._gaq = [['_setAccount','#{analytics}'],['_trackPageview'],['_trackPageLoadTime']];
-          (function() {
-          \  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-          \  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-          \  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-          })();
-        }
+      ^{pageBody pc}

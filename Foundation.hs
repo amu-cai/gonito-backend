@@ -86,7 +86,7 @@ data LayoutCustomization = LayoutCustomization {
 
 instance Default LayoutCustomization where
   def = LayoutCustomization {
-    layoutCustomizationBanner = Nothing,
+    layoutCustomizationBanner = Just "/static/images/poland5.jpg",
     layoutCustomizationRightPanel = Nothing }
 
 ourBanner :: Text -> LayoutCustomization

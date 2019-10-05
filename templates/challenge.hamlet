@@ -1,6 +1,6 @@
 
 <div .row>
-  <div .col-md-1 role="complementary" style="z-index:1;">
+  <div .col-md-2 role="complementary" style="z-index:1;">
     <ul class="nav nav-pills nav-stacked navbar-left">
      <li role="presentation" class="active"><a href="@{ShowChallengeR (challengeName challenge)}">Challenge</a>
      <li role="presentation"><a href="@{ChallengeReadmeR (challengeName challenge)}">Readme</a>
@@ -10,7 +10,7 @@
        <li role="presentation"><a href="@{ChallengeMySubmissionsR (challengeName challenge)}">My entries</a>
      <li role="presentation"><a href="@{ChallengeAllSubmissionsR (challengeName challenge)}">All entries</a>
      <li role="presentation"><a href="@{ChallengeDiscussionR (challengeName challenge)}">Discussion</a>
-  <div .col-md-11 role="main">
+  <div .col-md-10 role="main">
     <div class="panel panel-default">
       <div class="panel-body">
         $if withHeader
