@@ -16,7 +16,7 @@
                    $if location /= ""
                       \@#{location}
         $maybe user <- maybeUser
-          <ul class="nav navbar-nav navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-top navbar-collapse collapse">
                 <li><a href="@{ListChallengesR}">Tasks</a>
                 <li><a href="@{PolEvalDatesR}">Dates</a>
                 <li><a href="@{PolEvalResultsR}">Results</a>
@@ -39,7 +39,7 @@
                     <li><a href="@{YourAccountR}">_{MsgYourAccount}</a></li>
                     <li><a href="@{AuthR LogoutR}">_{MsgLogOut}</a></li>
         $nothing
-            <ul class="nav navbar-nav navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-top navbar-collapse collapse">
                 <li><a href="@{ListChallengesR}">Tasks</a>
                 <li><a href="@{PolEvalDatesR}">Dates</a>
                 <li><a href="@{PolEvalResultsR}">Results</a>
