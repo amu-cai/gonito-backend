@@ -30,7 +30,7 @@ getHomeR = do
       setMessage $ toHtml ("First, set up your name and/or ID!" :: Text)
       redirect $ YourAccountR
     else
-      defaultCustomizableLayout (ourBanner "poland2") { layoutCustomizationRightPanel = Just rightPanel } $ do
+      defaultCustomizableLayout (ourBanner "poland5") { layoutCustomizationRightPanel = Just rightPanel } $ do
         aDomId <- newIdent
-        setTitle "Welcome To Gonito.net!"
+        setTitle "PolEval 2020"
         $(widgetFile "homepage")

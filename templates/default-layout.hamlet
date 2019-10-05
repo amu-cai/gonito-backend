@@ -11,30 +11,25 @@
                <span class="icon-bar">
                <span class="icon-bar">
                <span class="icon-bar">
-            <a class="navbar-brand" href="@{HomeR}">Gonito.net
+            <a class="navbar-brand" href="@{HomeR}">PolEval 2020
                $maybe location <- appLocation $ appSettings master
                    $if location /= ""
                       \@#{location}
         $maybe user <- maybeUser
-          <ul class="nav navbar-nav navbar-top navbar-collapse collapse">
-                <li class="dropdown">
-                   <a id="about" href="#" class="dropdown-toggle" data-toggle="dropdown">_{MsgAbout}<span class="caret"></span>
-                   <ul class="dropdown-menu">
-                       <li><a href="@{PresentationPSNC2019R}">_{MsgPresentation}</a>
-                       <li><a href="@{WritingPapersWithGonitoR}">_{MsgWritingPapers}</a>
-                       <li><a href="@{GonitoInClassR}">_{MsgGonitoInClass}</a>
-                <li><a href="@{ListChallengesR}">_{MsgListChallenges}</a>
-                <li><a href="@{TagsR}">_{MsgListTags}</a>
-                <li><a href="@{AchievementsR}">_{MsgAchievements}</a>
-                <li><a href="@{DashboardR}">_{MsgDashboard}</a>
+          <ul class="nav navbar-nav navbar-collapse collapse">
+                <li><a href="@{ListChallengesR}">Tasks</a>
+                <li><a href="@{PolEvalDatesR}">Dates</a>
+                <li><a href="@{PolEvalResultsR}">Results</a>
+                <li><a href="@{PolEvalPrizesR}">Prizes</a>
+                <li><a href="@{PolEvalPublicationR}">Publication</a>
+                <li><a href="@{PolEvalOrganizersR}">Organizers</a>
+                <li><a href="http://2019.poleval.pl/">PolEval 2019</a>
                 $if userIsAdmin $ entityVal user
                     <li class="dropdown">
                         <a id="admin" href="#" class="dropdown-toggle" data-toggle="dropdown">_{MsgManage}<span class="caret"></span>
                         <ul class="dropdown-menu">
                             <li><a href="@{CreateChallengeR}">_{MsgCreateChallenge}</a>
                             <li><a href="@{CreateResetLinkR}">_{MsgCreateResetLink}</a>
-                            <li><a href="@{ExtraPointsR}">_{MsgAddExtraPoints}</a>
-                            <li><a href="@{CoursesITeachR}">_{MsgCoursesITeach}</a>
                             <li><a href="@{ListArchivedChallengesR}">_{MsgShowArchivedChallenges}</a>
 
           <ul class="nav navbar-nav navbar-collapse collapse navbar-right">
@@ -42,18 +37,16 @@
                 <a href="@{AuthR LoginR}" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">#{userIdent $ entityVal user}<span class="caret"></span>
                 <ul class="dropdown-menu">
                     <li><a href="@{YourAccountR}">_{MsgYourAccount}</a></li>
-                    <li><a href="@{MyScoreR}">_{MsgYourScore}</a></li>
                     <li><a href="@{AuthR LogoutR}">_{MsgLogOut}</a></li>
         $nothing
-            <ul class="nav navbar-nav navbar-top navbar-collapse collapse">
-                <li class="dropdown">
-                   <a id="about" href="#" class="dropdown-toggle" data-toggle="dropdown">_{MsgAbout}<span class="caret"></span>
-                   <ul class="dropdown-menu">
-                       <li><a href="@{PresentationPSNC2019R}">_{MsgPresentation}</a>
-                       <li><a href="@{WritingPapersWithGonitoR}">_{MsgWritingPapers}</a>
-                <li><a href="@{ListChallengesR}">_{MsgListChallenges}</a>
-                <li><a href="@{TagsR}">_{MsgListTags}</a>
-                <li><a href="@{DashboardR}">_{MsgDashboard}</a>
+            <ul class="nav navbar-nav navbar-collapse collapse">
+                <li><a href="@{ListChallengesR}">Tasks</a>
+                <li><a href="@{PolEvalDatesR}">Dates</a>
+                <li><a href="@{PolEvalResultsR}">Results</a>
+                <li><a href="@{PolEvalPrizesR}">Prizes</a>
+                <li><a href="@{PolEvalPublicationR}">Publication</a>
+                <li><a href="@{PolEvalOrganizersR}">Organizers</a>
+                <li><a href="http://2019.poleval.pl/">PolEval 2019</a>
 
             <ul class="nav navbar-nav navbar-collapse collapse navbar-right">
                 <li><a href="@{AuthR LoginR}">log in</a>
