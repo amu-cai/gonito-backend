@@ -81,3 +81,10 @@
 /presentation/psnc-2019 PresentationPSNC2019R GET
 /gonito-in-class GonitoInClassR GET
 /writing-papers WritingPapersWithGonitoR GET
+
+/tasks PolEvalTasksR GET
+/dates PolEvalDatesR GET
+/results PolEvalResultsR GET
+/prizes PolEvalPrizesR GET
+/publication PolEvalPublicationR GET
+/organizers PolEvalOrganizersR GET

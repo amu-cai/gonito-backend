@@ -35,7 +35,7 @@ database:
   database: "_env:PGDATABASE:gonito"
   poolsize: "_env:PGPOOLSIZE:10"
 
-copyright: © Filip Graliński
+copyright: © PolEval 2020 / © Filip Graliński for Gonito platform
 
 admin-user: "_env:ADMINUSER:"
 admin-password: "_env:ADMINPASS:"

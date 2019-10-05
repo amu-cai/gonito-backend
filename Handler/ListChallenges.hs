@@ -10,7 +10,7 @@ getListArchivedChallengesR = generalListChallenges [ChallengeArchived ==. Just T
 
 generalListChallenges filterExpr = do
   challenges <- runDB $ selectList filterExpr [Desc ChallengeStarred, Desc ChallengeStamp]
-  defaultLayout $ do
+  defaultCustomizableLayout (ourBanner "poland2") $ do
     setTitle "List challenges"
     $(widgetFile "list-challenges")
 

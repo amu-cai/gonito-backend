@@ -19,6 +19,8 @@ getHomeR = do
 
   starredChallenges <- runDB $ selectList [ChallengeStarred ==. True] [Desc ChallengeStamp]
 
+  let rightPanel = $(widgetFile "poleval-schedule-panel")
+
   let maybeLocalId = case maybeUser of
         Just user -> userLocalId $ entityVal user
         Nothing -> Nothing
@@ -28,7 +30,7 @@ getHomeR = do
       setMessage $ toHtml ("First, set up your name and/or ID!" :: Text)
       redirect $ YourAccountR
     else
-      defaultLayout $ do
+      defaultCustomizableLayout (ourBanner "poland2") { layoutCustomizationRightPanel = Just rightPanel } $ do
         aDomId <- newIdent
         setTitle "Welcome To Gonito.net!"
         $(widgetFile "homepage")

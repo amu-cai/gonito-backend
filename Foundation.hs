@@ -202,6 +202,13 @@ instance Yesod App where
     isAuthorized (ChallengeParamGraphDataR _ _ _) _ = regularAuthorization
     isAuthorized (IndicatorGraphDataR _) _ = regularAuthorization
 
+    isAuthorized PolEvalTasksR _ = return Authorized
+    isAuthorized PolEvalDatesR _ = return Authorized
+    isAuthorized PolEvalResultsR _ = return Authorized
+    isAuthorized PolEvalPrizesR _ = return Authorized
+    isAuthorized PolEvalPublicationR _ = return Authorized
+    isAuthorized PolEvalOrganizersR _ = return Authorized
+
     -- Default to Authorized for now.
     isAuthorized _ _ = isTrustedAuthorized
 

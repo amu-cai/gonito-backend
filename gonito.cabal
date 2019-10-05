@@ -57,6 +57,7 @@ library
                      Handler.Evaluate
                      Data.SubmissionConditions
                      Gonito.ExtractMetadata
+                     Handler.PolEval
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT

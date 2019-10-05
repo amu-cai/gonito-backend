@@ -1,0 +1,25 @@
+<h2 style="line-height: 2;">Organizers
+<table width="100%">
+  <tbody>
+    <tr>
+      <td style="text-align: center;" width="33%">
+        <p>
+          <a href="http://zil.ipipan.waw.pl">
+            <img src="/static/images/zil.png" alt="zil.png" width="200" height="180">
+      <td style="text-align: center;" valign="middle" width="33%">
+        <p>
+          <img src="/static/images/sages.png" alt="sages.png" width="200" height="180">
+<h3 style="margin-top: 10px;">Contact persons
+<table style="border-spacing: 25px 0; border-collapse: separate;" width="100%">
+  <tbody>
+    <tr style="margin: 0; padding: 0;">
+      <td style="margin: 0; padding: 0" valign="middle" width="33%">
+        <p><strong>Concept and administrative issues</strong>
+      <td style="margin: 0; padding: 0" valign="middle" width="66%">
+        <p><a href="mailto:maciej.ogrodniczuk@ipipan.waw.pl">Maciej Ogrodniczuk</a><br />Institute of Computer Science, Polish Academy of Sciences
+        <p><a href="mailto:lukasz.kobylinski@ipipan.waw.pl">Łukasz Kobyliński</a><br />Institute of Computer Science, Polish Academy of Sciences / Sages
+    <tr style="margin: 0; padding: 0;">
+      <td style="margin: 0; padding: 0; border-bottom: 1px solid black;" valign="middle" width="33%">
+        <p><strong>Gonito evaluation platform</strong>
+      <td style="margin: 0; padding: 0; border-bottom: 1px solid black;" valign="middle" width="66%">
+        <p><a href="mailto:filip.gralinski@applica.ai">Filip Graliński</a><br />Applica.ai
