@@ -38,8 +38,19 @@
   <div id="footer">
     <div id="footer-inner">
       <p class="footer-sign-in">
-        <span class="sign-in">
-          <a href="@{AuthR LoginR}">log in
+        $maybe user <- maybeUser
+          <span class="sign-in">
+            <a href="@{AuthR LogoutR}">log out
+          $if userIsAdmin $ entityVal user
+            <span>
+              :: <a href="@{CreateChallengeR}">_{MsgCreateChallenge}</a>
+            <span>
+              :: <a href="@{CreateResetLinkR}">_{MsgCreateResetLink}</a>
+            <span>
+              :: <a href="@{ListArchivedChallengesR}">_{MsgShowArchivedChallenges}</a>
+        $nothing
+          <span class="sign-in">
+            <a href="@{AuthR LoginR}">log in
 
       <div class="clear">
       <p class="footer-copyright">#{appCopyright $ appSettings master}
