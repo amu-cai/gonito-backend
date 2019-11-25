@@ -40,7 +40,8 @@
       <p class="footer-sign-in">
         $maybe user <- maybeUser
           <span class="sign-in">
-            <a href="@{AuthR LogoutR}">log out
+            <a href="@{YourAccountR}">your account
+            :: <a href="@{AuthR LogoutR}">log out
           $if userIsAdmin $ entityVal user
             <span>
               :: <a href="@{CreateChallengeR}">_{MsgCreateChallenge}</a>
@@ -48,6 +49,7 @@
               :: <a href="@{CreateResetLinkR}">_{MsgCreateResetLink}</a>
             <span>
               :: <a href="@{ListArchivedChallengesR}">_{MsgShowArchivedChallenges}</a>
+
         $nothing
           <span class="sign-in">
             <a href="@{AuthR LoginR}">log in
