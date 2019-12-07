@@ -280,7 +280,7 @@ cloneRepo' userId repoCloningSpec chan = do
 -- Should be used just before a raw git command is executed
 -- (i.e. its changes will not be reflected in the database).
 fixGitRepoUrl :: Text -> Text
-fixGitRepoUrl = id
+fixGitRepoUrl = (T.replace "poleval2020.nlp.ipipan.waw.pl" "127.0.0.1") . (T.replace "poleval2020.nlp.ipipan.waw.pl:8222" "127.0.0.1")
 
 rawClone :: FilePath -> RepoCloningSpec -> Channel -> Handler ExitCode
 rawClone tmpRepoDir repoCloningSpec chan = runWithChannel chan $ do
