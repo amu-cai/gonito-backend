@@ -1,4 +1,7 @@
 <div id="main-container" class="container_24">
+  $maybe msg <- mmsg
+     <div #message .alert .alert-warning><a href="#" class="close" data-dismiss="alert">&times;</a> #{msg}
+
   <div id="header">
     <h1>
        <a title="Home" href="/">POLEVAL 2020
