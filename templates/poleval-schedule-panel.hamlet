@@ -1,6 +1,4 @@
 <h3>Info
 <p style="margin-bottom: 0;">
-   <strong>September 17, 2019
-<ul>
-   <li>
-      <a href="@{ListChallengesR}">Call for PolEval 2020 tasks</a> has been published.
+   This is an unofficial Gonito instance for PolEval 2020. For the official
+   web site, see <a href="http://poleval.pl">http://poleval.pl</a>.
