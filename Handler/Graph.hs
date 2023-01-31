@@ -4,7 +4,7 @@ import Import
 
 import Handler.Tables
 import Handler.Dashboard (indicatorToEntry, prettyIndicatorEntry, formatTarget, IndicatorEntry(..), TargetStatus(..), filterEntries, getTargetStatus)
-import Handler.Shared (formatParameter, formatScore, fetchMainTest, compareFun)
+import Handler.Shared (formatParameter, formatScore, fetchMainTest, compareFun, fetchDisclosedInfoForTest, DisclosedInfo(..), fetchDisclosedInfo)
 import Data.Maybe
 import Data.List ((!!))
 import Database.Persist.Sql
@@ -31,22 +31,28 @@ getChallengeParamGraphDataR :: Text -> (Key Test) -> Text -> Handler Value
 getChallengeParamGraphDataR challengeName testId paramName = do
   (Entity challengeId _) <- runDB $ getBy404 $ UniqueName challengeName
   test <- runDB $ get404 testId
-  let testRef = getTestReference (Entity testId test)
 
-  (entries, _) <- runDB $ getChallengeSubmissionInfos 1 (const True) (const True) id challengeId
+  disclosedInfo <- fetchDisclosedInfoForTest challengeId (Entity testId test)
 
-  let values = map (findParamValue paramName) entries
+  case disclosedInfo of
+    DisclosedInfo Nothing ->
+      do
+          let testRef = getTestReference (Entity testId test)
 
-  let items = Data.Maybe.catMaybes $ map (toParamGraphItem testRef paramName) $ zip entries values
+          (entries, _) <- runDB $ getChallengeSubmissionInfos 1 (const True) (const True) id challengeId
 
-  let series = map (\(label, rs) -> ParamGraphSeries label rs)
-               $ organizeBy
-               $ map (\(ParamGraphItem entry label x y) -> (label, (entry, x, y))) items
+          let values = map (findParamValue paramName) entries
 
-  return $ object [
-    "xs" .= object (map (\(ParamGraphSeries seriesName _) -> (seriesName .= (xSeriesName seriesName))) series),
-    "columns" .= ((map (toYColumn $ testPrecision test) series) ++ (map toXColumn series))
-                  ]
+          let items = Data.Maybe.catMaybes $ map (toParamGraphItem testRef paramName) $ zip entries values
+
+          let series = map (\(label, rs) -> ParamGraphSeries label rs)
+                       $ organizeBy
+                       $ map (\(ParamGraphItem entry label x y) -> (label, (entry, x, y))) items
+
+          return $ object [
+            "xs" .= object (map (\(ParamGraphSeries seriesName _) -> ((fromText seriesName) .= (xSeriesName seriesName))) series),
+            "columns" .= ((map (toYColumn $ testPrecision test) series) ++ (map toXColumn series))
+                          ]
 
 toYColumn :: Maybe Int -> ParamGraphSeries -> [Text]
 toYColumn mPrecision (ParamGraphSeries seriesName items) =
@@ -81,30 +87,35 @@ findParamValue paramName entry =
 
 submissionsToJSON :: ((Entity Submission) -> Bool) -> Text -> Handler Value
 submissionsToJSON condition challengeName = do
-  (Entity challengeId _) <- runDB $ getBy404 $ UniqueName challengeName
+  (Entity challengeId challenge) <- runDB $ getBy404 $ UniqueName challengeName
 
-  (entries, _) <- getLeaderboardEntriesByCriterion 1 challengeId
-                                                  condition
-                                                  onlyTheBestVariant
-                                                  (\entry -> [entityKey $ tableEntrySubmission entry])
+  disclosedInfo <- fetchDisclosedInfo challenge
+
+  case disclosedInfo of
+    DisclosedInfo Nothing ->
+      do
+         (entries, _) <- getLeaderboardEntriesByCriterion 1 challengeId
+                                                         condition
+                                                         onlyTheBestVariant
+                                                         (\entry -> [entityKey $ tableEntrySubmission entry])
 
 
-  mEntMainTest <- runDB $ fetchMainTest challengeId
-  case mEntMainTest of
-    Just entMainTest -> do
-      let mainTestRef = getTestReference entMainTest
+         mEntMainTest <- runDB $ fetchMainTest challengeId
+         case mEntMainTest of
+           Just entMainTest -> do
+             let mainTestRef = getTestReference entMainTest
 
-      let naturalRange = getNaturalRange mainTestRef entries
-      let submissionIds = map leaderboardBestSubmissionId entries
+             let naturalRange = getNaturalRange mainTestRef entries
+             let submissionIds = map leaderboardBestSubmissionId entries
 
-      forks <- runDB $ selectList [ForkSource <-. submissionIds, ForkTarget <-. submissionIds] []
+             forks <- runDB $ selectList [ForkSource <-. submissionIds, ForkTarget <-. submissionIds] []
 
-      return $ object [ "nodes" .= (Data.Maybe.catMaybes
-                                    $ map (auxSubmissionToNode mainTestRef naturalRange)
-                                    $ entries),
-                        "edges" .= map forkToEdge forks ]
-    Nothing -> do
-      return $ object []
+             return $ object [ "nodes" .= (Data.Maybe.catMaybes
+                                           $ map (auxSubmissionToNode mainTestRef naturalRange)
+                                           $ entries),
+                               "edges" .= map forkToEdge forks ]
+           Nothing -> do
+             return $ object []
 
 getNaturalRange :: TestReference -> [LeaderboardEntry] -> Double
 getNaturalRange testRef entries = 2.0 * (interQuantile

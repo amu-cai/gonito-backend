@@ -33,11 +33,11 @@ $if (checkIfAdmin mUserEnt)
 $if null tests
   <p>_{MsgNoTests}
 $else
-  ^{Table.buildBootstrap (leaderboardTable mUserId (challengeName challenge) scheme challengeRepo tests) leaderboardWithRanks}
+  ^{Table.buildBootstrap (leaderboardTable disclosedInfo mUserId (challengeName challenge) scheme challengeRepo tests) leaderboardWithRanks}
 
   $maybe altLeaderboardWithRanks <- mAltLeaderboardWithRanks
     $maybe altTests <- mAltTests
-      ^{Table.buildBootstrap (altLeaderboardTable mUserId (challengeName challenge) scheme challengeRepo altTests) altLeaderboardWithRanks}
+      ^{Table.buildBootstrap (altLeaderboardTable disclosedInfo mUserId (challengeName challenge) scheme challengeRepo altTests) altLeaderboardWithRanks}
     $nothing
   $nothing
 

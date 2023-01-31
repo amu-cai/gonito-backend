@@ -111,3 +111,4 @@ Color: color name or hex value
 Phase: competition phase (use a pre-existing tag)
 TestChallengeAnnouncements: Test announcements
 Wipe: Wipe
+Disclosed: number of disclosed digits for the main test set (leave empty if everything to be disclosed)

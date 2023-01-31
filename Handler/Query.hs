@@ -200,11 +200,12 @@ getApiTxtScore mMetricName sha1Prefix = do
 doGetScore :: (BaseBackend (YesodPersistBackend site) ~ SqlBackend, PersistUniqueRead (YesodPersistBackend site), BackendCompatible SqlBackend (YesodPersistBackend site), YesodPersist site, PersistQueryRead (YesodPersistBackend site)) => Maybe Text -> Entity Submission -> HandlerFor site Text
 doGetScore mMetricName submission = do
   let challengeId = submissionChallenge $ entityVal submission
-
   mTestEnt <- runDB $ fetchTestByName mMetricName challengeId
   case mTestEnt of
     Just testEnt -> do
       let theTestId = entityKey testEnt
+
+      disclosedInfo <- fetchDisclosedInfoForTest challengeId testEnt
 
       let submissionId = entityKey submission
 
@@ -220,7 +221,7 @@ doGetScore mMetricName submission = do
                       return (evaluation, ver)
 
       case onlyWithHeadVersions evals of
-        [eval] -> return $ formatTruncatedScore (getTestFormattingOpts $ entityVal testEnt) (Just $ entityVal eval)
+        [eval] -> return $ formatTruncatedScore disclosedInfo (getTestFormattingOpts $ entityVal testEnt) (Just $ entityVal eval)
         _ -> return "NONE"
     Nothing -> return "NONE"
   where onlyWithHeadVersions [] = []
@@ -257,7 +258,9 @@ doGetScoreForOut mMetricName submission sha1code = do
                               Just mn -> find (\(_, t) -> formatTestEvaluationScheme (entityVal t) == mn) evals
   case evalSelected of
     Nothing -> return "None"
-    Just (eval, testEnt) -> return $ formatTruncatedScore (getTestFormattingOpts $ entityVal testEnt)
+    Just (eval, testEnt) -> do
+      disclosedInfo <- fetchDisclosedInfoForTest (submissionChallenge $ entityVal submission) testEnt
+      return $ formatTruncatedScore disclosedInfo (getTestFormattingOpts $ entityVal testEnt)
                                                          (Just $ entityVal eval)
 
 
@@ -318,6 +321,8 @@ toQueryResultView fsi = do
   let submission = fsiSubmission fsi
 
   theVersion <- realSubmissionVersion $ Entity submissionId submission
+  challenge <- runDB $ get404 $ submissionChallenge submission
+  disclosedInfo <- fetchDisclosedInfo challenge
 
   (tableEntries, tests) <- runDB
                           $ getChallengeSubmissionInfosForVersion 2
@@ -334,7 +339,7 @@ toQueryResultView fsi = do
                             variantViewId = fromSqlKey $ entityKey $ tableEntryVariant entry,
                             variantViewName = variantName $ entityVal $ tableEntryVariant entry,
                             variantViewRank = tableEntryRank entry,
-                            variantViewEvaluations =  catMaybes $ Import.map (convertEvaluationToView $ tableEntryMapping entry) tests,
+                            variantViewEvaluations = catMaybes $ applyDisclosedInfoOnLast disclosedInfo (convertEvaluationToView $ tableEntryMapping entry) tests,
                             variantViewParams = Import.map entityVal $ tableEntryParams entry
 
                             }) strippedTableEntries
@@ -629,7 +634,13 @@ viewOutputWithNonDefaultTestSelected entry tests mainTest (outputHash, testSet) 
   let theStamp = submissionStamp $ entityVal $ tableEntrySubmission $ current entry
   let theVersion = submissionVersion $ entityVal $ tableEntrySubmission $ current entry
 
-  challenge <- handlerToWidget $ runDB $ get404 $ submissionChallenge $ entityVal $ tableEntrySubmission $ current entry
+  let challengeId = submissionChallenge $ entityVal $ tableEntrySubmission $ current entry
+  challenge <- handlerToWidget $ runDB $ get404 challengeId
+
+  disclosedInfo <- case tests' of
+    [] -> return $ DisclosedInfo Nothing
+    t@(_:_) -> liftHandler $ fetchDisclosedInfoForTest challengeId $ last $ impureNonNull tests'
+
   let isNonSensitive = challengeSensitive challenge == Just False
 
   let shouldBeShown = testSet /= (testName $ entityVal mainTest) && isNonSensitive
@@ -639,7 +650,7 @@ viewOutputWithNonDefaultTestSelected entry tests mainTest (outputHash, testSet) 
   let testLabels = map (formatTestEvaluationScheme . entityVal) tests'
   let theMapping = LM.fromList $ map (\test -> (formatTestEvaluationScheme $ entityVal test,
                                             (test,
-                                             (formatTruncatedScore (getTestFormattingOpts $ entityVal test)
+                                             (formatTruncatedScore disclosedInfo (getTestFormattingOpts $ entityVal test)
                                               <$> extractScore (getTestReference test) <$> entry)))) tests'
   let crossTables = splitIntoTablesWithValues "Metric" "Score" theMapping testLabels
 
@@ -726,7 +737,7 @@ lineByLineTable (Entity testId test) theVersion theStamp = mempty
   ++ theLimitedTextCell "input" (((\(DiffLineRecord inp _ _ _) -> inp) . snd))
   ++ theLimitedTextCell "expected output" ((\(DiffLineRecord _ expected _ _) -> expected) . snd)
   ++ theLimitedDiffTextCell "actual output" (fmap fst . (\(DiffLineRecord _ _ out _) -> out) . snd)
-  ++ resultCell test (fakeEvaluation . getScoreFromDiff . snd)
+  ++ resultCell (fakeEvaluation . getScoreFromDiff . snd) (DisclosedInfo Nothing) test
   where fakeEvaluation score = Just $ Evaluation {
           evaluationTest = testId,
           evaluationChecksum = testChecksum test,
@@ -739,6 +750,9 @@ lineByLineTable (Entity testId test) theVersion theStamp = mempty
 resultTable :: Entity Submission -> WidgetFor App ()
 resultTable entSubmission@(Entity submissionId submission) = do
   theVersion <- handlerToWidget $ realSubmissionVersion entSubmission
+
+  challenge <- liftHandler $ runDB $ get404 $ submissionChallenge submission
+  disclosedInfo <- liftHandler $ fetchDisclosedInfo challenge
 
   (tableEntries, tests') <- handlerToWidget
                           $ runDB

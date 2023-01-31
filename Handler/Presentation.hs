@@ -8,6 +8,7 @@ import GEval.MetricsMeta
 
 import Handler.ShowChallenge
 import Handler.Tables
+import Handler.Shared
 
 import qualified Yesod.Table as Table
 
@@ -27,6 +28,8 @@ retroc2ChallengeName = "retroc2"
 
 sampleUserIdent :: Text
 sampleUserIdent = "ptlen@ceti.pl"
+
+disclosed = DisclosedInfo Nothing
 
 getPresentation4RealR :: Handler Html
 getPresentation4RealR = do
@@ -76,12 +79,11 @@ getPresentationDATeCH2017R = do
   retroc2Leaderboard <- getSampleLeaderboard retroc2ChallengeName
   presentationLayout $(widgetFile "presentation-datech-2017")
 
-
 getSampleLeaderboard :: Text -> HandlerFor App (WidgetFor App ())
-getSampleLeaderboard name = getSampleLeaderboardGeneralized name 1 BySubmitter leaderboardTable
+getSampleLeaderboard name = getSampleLeaderboardGeneralized name 1 BySubmitter (leaderboardTable disclosed)
 
 getSampleAltLeaderboard :: Text -> HandlerFor App (WidgetFor App ())
-getSampleAltLeaderboard name = getSampleLeaderboardGeneralized name 2 ByTag altLeaderboardTable
+getSampleAltLeaderboard name = getSampleLeaderboardGeneralized name 2 ByTag (altLeaderboardTable disclosed)
 
 getSampleLeaderboardGeneralized name maxPriority method table = do
   (Entity challengeId challenge) <- runDB $ getBy404 $ UniqueName name

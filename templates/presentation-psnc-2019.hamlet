@@ -155,7 +155,7 @@
    <h2>… and see your results
 
    <div style="font-size: 50%">
-     ^{Table.buildBootstrap (submissionsTable Nothing (challengeName challenge) scheme challengeRepo tests) evaluationMaps}
+     ^{Table.buildBootstrap (submissionsTable Nothing (challengeName challenge) scheme challengeRepo (DisclosedInfo Nothing) tests) evaluationMaps}
 
 <div class="step slide" data-x="2000" data-y="5000">
    <h2>Be open!</h2>

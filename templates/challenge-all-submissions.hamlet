@@ -1,7 +1,7 @@
 <div class="alert alert-info" role="alert">
             <p>This is a long list of all submissions, if you want to see only the best, click <a href="@{ShowChallengeR (challengeName challenge)}">leaderboard</a>.
 
-^{Table.buildBootstrap (submissionsTable muserId (challengeName challenge) scheme challengeRepo tests) submissions}
+^{Table.buildBootstrap (submissionsTable muserId (challengeName challenge) scheme challengeRepo disclosedInfo tests) submissions}
 
 $if not (null params)
    <h3>Submission graph

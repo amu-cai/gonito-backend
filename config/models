@@ -87,6 +87,11 @@ Version
     description Text
     stamp UTCTime default=now()
     phase TagId Maybe
+    -- how many digits for results are disclosed (for the main test set)
+    -- 0 - means no digits are disclosed
+    -- NULL - all the result is disclosed
+    -- TODO for the time being no other values are handled
+    disclosed Int Maybe
 Test
     challenge ChallengeId
     metric EvaluationScheme

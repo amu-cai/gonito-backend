@@ -115,25 +115,25 @@ formatSubmittingEntity tableEntry =
     Just teamEnt -> teamIdent $ entityVal teamEnt
     Nothing -> formatSubmitter $ entityVal $ tableEntrySubmitter tableEntry
 
-submissionsTable :: Maybe UserId -> Text -> RepoScheme -> Repo -> [Entity Test] -> Table App TableEntry
-submissionsTable mauthId challengeName repoScheme challengeRepo tests = mempty
+submissionsTable :: Maybe UserId -> Text -> RepoScheme -> Repo -> DisclosedInfo -> [Entity Test] -> Table App TableEntry
+submissionsTable mauthId challengeName repoScheme challengeRepo disclosedInfo tests = mempty
   ++ Table.int "#" tableEntryRank
   ++ Table.text "submitter" formatSubmittingEntity
   ++ timestampCell "when" tableEntryStamp
   ++ versionCell tableEntryVersion
   ++ descriptionCell mauthId
-  ++ mconcat (map (\e@(Entity _ t) -> resultCell t (extractScore $ getTestReference e)) tests)
+  ++ mconcat (applyDisclosedInfoOnLast disclosedInfo (\d e@(Entity _ t) -> resultCell (extractScore $ getTestReference e) d t) tests)
   ++ statusCell challengeName repoScheme challengeRepo (\tableEntry -> (entityKey $ tableEntrySubmission tableEntry,
                                                                        entityVal $ tableEntrySubmission tableEntry,
                                                                        entityKey $ tableEntryVariant tableEntry,
                                                                        entityVal $ tableEntryVariant tableEntry,
                                                                        mauthId))
 
-variantTable :: [Text] -> [Entity Test] -> Table App TableEntry
-variantTable paramNames tests = mempty
+variantTable :: [Text] -> DisclosedInfo -> [Entity Test] -> Table App TableEntry
+variantTable paramNames disclosedInfo tests = mempty
   ++ Table.int "#" tableEntryRank
   ++ mconcat (map paramExtractor paramNames)
-  ++ mconcat (map (\e@(Entity _ t) -> resultCell t (extractScore $ getTestReference e)) tests)
+  ++ mconcat (applyDisclosedInfoOnLast disclosedInfo (\d e@(Entity _ t) -> resultCell (extractScore $ getTestReference e) d t) tests)
   ++ Table.widget "" variantStatusCellWidget
 
 variantStatusCellWidget :: TableEntry -> WidgetFor App ()
@@ -187,14 +187,14 @@ versionCell :: (a -> ((Int, Int, Int), (Maybe Import.Tag))) -> Table site a
 versionCell fun = Table.widget "ver." (
   \e -> fragmentWithTag (formatVersion $ fst $ fun e) (snd $ fun e))
 
-leaderboardTable :: Maybe UserId -> Text -> RepoScheme -> Repo -> [Entity Test] -> Table App (Int, LeaderboardEntry)
-leaderboardTable mauthId challengeName repoScheme challengeRepo tests = mempty
+leaderboardTable :: DisclosedInfo -> Maybe UserId -> Text -> RepoScheme -> Repo -> [Entity Test] -> Table App (Int, LeaderboardEntry)
+leaderboardTable disclosedInfo mauthId challengeName repoScheme challengeRepo tests = mempty
   ++ Table.int "#" fst
   ++ Table.text "submitter" (formatSubmittingEntityInLeaderboard . snd)
   ++ timestampCell "when" (submissionStamp . leaderboardBestSubmission . snd)
   ++ versionCell (leaderboardVersion . snd)
   ++ leaderboardDescriptionCell mauthId
-  ++ mconcat (map (\e@(Entity _ t) -> resultCell t (extractScoreFromLeaderboardEntry (getTestReference e) . snd)) tests)
+  ++ mconcat (applyDisclosedInfoOnLast disclosedInfo (\d e@(Entity _ t) -> resultCell (extractScoreFromLeaderboardEntry (getTestReference e) . snd) d t) tests)
   ++ Table.int "×" (leaderboardNumberOfSubmissions . snd)
   ++ statusCell challengeName repoScheme challengeRepo (\(_, e) -> (leaderboardBestSubmissionId e,
                                                                    leaderboardBestSubmission e,
@@ -202,11 +202,11 @@ leaderboardTable mauthId challengeName repoScheme challengeRepo tests = mempty
                                                                    leaderboardBestVariant e,
                                                                    mauthId))
 
-altLeaderboardTable :: Maybe UserId -> Text -> RepoScheme -> Repo -> [Entity Test] -> Table App (Int, LeaderboardEntry)
-altLeaderboardTable mauthId challengeName repoScheme challengeRepo tests = mempty
+altLeaderboardTable :: DisclosedInfo -> Maybe UserId -> Text -> RepoScheme -> Repo -> [Entity Test] -> Table App (Int, LeaderboardEntry)
+altLeaderboardTable disclosedInfo mauthId challengeName repoScheme challengeRepo tests = mempty
   ++ Table.int "#" fst
   ++ leaderboardOnlyTagsCell mauthId
-  ++ mconcat (map (\e@(Entity _ t) -> resultCell t (extractScoreFromLeaderboardEntry (getTestReference e) . snd)) tests)
+  ++ mconcat (applyDisclosedInfoOnLast disclosedInfo (\d e@(Entity _ t) -> resultCell (extractScoreFromLeaderboardEntry (getTestReference e) . snd) d t) tests)
   ++ statusCell challengeName repoScheme challengeRepo (\(_, e) -> (leaderboardBestSubmissionId e,
                                                                    leaderboardBestSubmission e,
                                                                    leaderboardBestVariantId e,
@@ -247,8 +247,8 @@ timestampCell h timestampFun = hoverTextCell h (Data.Text.pack . shorterFormat .
 statusCell :: Text -> RepoScheme -> Repo -> (a -> (SubmissionId, Submission, VariantId, Variant, Maybe UserId)) -> Table App a
 statusCell challengeName repoScheme challengeRepo fun = Table.widget "" (statusCellWidget challengeName repoScheme challengeRepo . fun)
 
-resultCell :: Test -> (a -> Maybe Evaluation) -> Table App a
-resultCell test fun = hoverTextCell (formatTestForHtml test) (formatTruncatedScore formattingOpts . fun) (formatFullScore . fun)
+resultCell :: (a -> Maybe Evaluation) -> DisclosedInfo -> Test -> Table App a
+resultCell fun disclosedInfo test = hoverTextCell (formatTestForHtml test) (formatTruncatedScore disclosedInfo formattingOpts . fun) (formatFullScore disclosedInfo . fun)
   where formattingOpts = getTestFormattingOpts test
 
 textLimited :: Int -> Text -> Text

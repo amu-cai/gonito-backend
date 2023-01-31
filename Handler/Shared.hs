@@ -751,15 +751,26 @@ testComparator (Entity _ a) (Entity _ b) =
 formatNonScientifically :: Double -> Text
 formatNonScientifically = T.pack . (printf "%f")
 
-formatFullScore :: Maybe Evaluation -> Text
-formatFullScore (Just evaluation) = fromMaybe "???" (formatNonScientifically <$> evaluationScore evaluation)
-formatFullScore Nothing = "N/A"
+data DisclosedInfo = DisclosedInfo (Maybe Int)
+undisclosed = "UNDISCLOSED"
 
-formatTruncatedScore :: FormattingOptions -> Maybe Evaluation -> Text
-formatTruncatedScore _ Nothing  = formatFullScore Nothing
-formatTruncatedScore formattingOpts (Just evaluation) = case evaluationScore evaluation of
+applyDisclosedInfoOnLast :: DisclosedInfo -> (DisclosedInfo -> a -> b) -> [a] -> [b]
+applyDisclosedInfoOnLast _ _ [] = []
+applyDisclosedInfoOnLast disclosedInfo fun [e] = [fun disclosedInfo e]
+applyDisclosedInfoOnLast disclosedInfo fun (h:t) =
+  (fun (DisclosedInfo Nothing) h : applyDisclosedInfoOnLast disclosedInfo fun t)
+
+formatFullScore :: DisclosedInfo -> Maybe Evaluation -> Text
+formatFullScore (DisclosedInfo (Just 0)) _ = undisclosed
+formatFullScore (DisclosedInfo Nothing) (Just evaluation) = fromMaybe "???" (formatNonScientifically <$> evaluationScore evaluation)
+formatFullScore (DisclosedInfo Nothing) Nothing = "N/A"
+
+formatTruncatedScore :: DisclosedInfo -> FormattingOptions -> Maybe Evaluation -> Text
+formatTruncatedScore (DisclosedInfo (Just 0)) _ _ = undisclosed
+formatTruncatedScore disclosedInfo@(DisclosedInfo Nothing) _ Nothing  = formatFullScore disclosedInfo Nothing
+formatTruncatedScore disclosedInfo@(DisclosedInfo Nothing) formattingOpts (Just evaluation) = case evaluationScore evaluation of
   Just score -> T.pack $ formatTheResultWithErrorBounds formattingOpts score (evaluationErrorBound evaluation)
-  Nothing -> formatFullScore Nothing
+  Nothing -> formatFullScore disclosedInfo Nothing
 
 
 getTestFormattingOpts :: Test -> FormattingOptions
@@ -842,3 +853,18 @@ fetchTheEvaluation :: (MonadIO m, PersistUniqueRead backend, BaseBackend backend
                      => Out -> SHA1 -> ReaderT backend m (Maybe (Entity Evaluation))
 fetchTheEvaluation out version =
   getBy $ UniqueEvaluationTestChecksumVersion (outTest out) (outChecksum out) version
+
+fetchDisclosedInfo challenge = do
+  Entity _ version <- runDB $ getBy404 $ UniqueVersionByCommit $ challengeVersion challenge
+  return $ DisclosedInfo $ versionDisclosed version
+
+fetchDisclosedInfoForTest challengeId (Entity _ test) = do
+  -- TODO this is an approximation, actually should be checked whether a main test
+  if ("test-" `isPrefixOf` testName test)
+    then
+     do
+       challenge <- runDB $ get404 challengeId
+       disclosedInfo <- fetchDisclosedInfo challenge
+       return disclosedInfo
+    else
+       return $ DisclosedInfo Nothing

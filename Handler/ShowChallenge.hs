@@ -177,11 +177,12 @@ getLeaderboardJsonR = makeSureChallengeAccessible getLeaderboardJsonR'
 
 getLeaderboardJsonR' :: Maybe (Entity User) -> Entity Challenge -> Handler Value
 getLeaderboardJsonR' _ (Entity challengeId challenge) = do
+  disclosedInfo <- fetchDisclosedInfo challenge
   leaderboardStyle <- determineLeaderboardStyle challenge
   (leaderboard, (_, tests)) <- getLeaderboardEntries 1 leaderboardStyle challengeId
   return $ toJSON $ LeaderboardView {
     leaderboardViewTests = tests,
-    leaderboardViewEntries = map (toLeaderboardEntryView tests) leaderboard }
+    leaderboardViewEntries = map (toLeaderboardEntryView disclosedInfo tests) leaderboard }
 
 data LeaderboardEntryView = LeaderboardEntryView {
   leaderboardEntryViewEntry :: LeaderboardEntry,
@@ -266,11 +267,11 @@ instance ToSchema LeaderboardEntryView where
                     ]
         & required .~ [ "submitter", "when", "version", "description", "times", "hash", "evaluations" ]
 
-toLeaderboardEntryView :: [(Entity Test)] -> LeaderboardEntry -> LeaderboardEntryView
-toLeaderboardEntryView tests entry = LeaderboardEntryView {
+toLeaderboardEntryView :: DisclosedInfo -> [(Entity Test)] -> LeaderboardEntry -> LeaderboardEntryView
+toLeaderboardEntryView disclosedInfo tests entry = LeaderboardEntryView {
   leaderboardEntryViewEntry = entry,
   leaderboardEntryViewEvaluations = catMaybes $
-                                    map (convertEvaluationToView (leaderboardEvaluationMap entry)) tests
+                                    applyDisclosedInfoOnLast disclosedInfo (convertEvaluationToView (leaderboardEvaluationMap entry)) tests
   }
 
 determineLeaderboardStyle :: Challenge -> Handler LeaderboardStyle
@@ -425,13 +426,17 @@ showChallengeWidget mUserEnt
                     tests
                     mAltTests
                     isHealthy
-  = $(widgetFile "show-challenge")
+  =
+  do
+    disclosedInfo <- liftHandler $ fetchDisclosedInfo challenge
+    $(widgetFile "show-challenge")
   where leaderboardWithRanks = zip [1..] leaderboard
         mAltLeaderboardWithRanks = zip [1..] <$> mAltLeaderboard
         maybeRepoLink = getRepoLink repo
         delta = Number 4
         higherTheBetterArray = getIsHigherTheBetterArray $ map entityVal tests
         mUserId = entityKey <$> mUserEnt
+
 
 data GitServer = Gogs | GitLab | GitHub | Gonito
   deriving (Eq, Show)
@@ -1591,13 +1596,16 @@ convertTagInfoToView tagInfo =
      tagViewAccepted = submissionTagAccepted $ entityVal $ snd tagInfo
      }
 
-convertEvaluationToView :: Map TestReference Evaluation -> Entity Test -> Maybe EvaluationView
-convertEvaluationToView theMapping entTest =
+convertEvaluationToView :: Map TestReference Evaluation -> DisclosedInfo -> Entity Test -> Maybe EvaluationView
+convertEvaluationToView theMapping disclosedInfo entTest =
   case join $ evaluationScore <$> mEvaluation of
     Just s ->
       Just $ EvaluationView {
-        evaluationViewScore = formatTruncatedScore formattingOps mEvaluation,
-        evaluationViewFullScore = s,
+        evaluationViewScore = formatTruncatedScore disclosedInfo formattingOps mEvaluation,
+        evaluationViewFullScore =
+            case disclosedInfo of
+              DisclosedInfo Nothing -> Just s
+              _ -> Nothing,
         evaluationViewTest = testRef
         }
     Nothing -> Nothing
@@ -1606,8 +1614,8 @@ convertEvaluationToView theMapping entTest =
         testRef = getTestReference entTest
 
 -- convertTableEntryToView :: Maybe UserId -> [Entity Test] -> TableEntry -> SubmissionView
-convertTableEntryToView :: [Entity Test] -> TableEntry -> HandlerFor App SubmissionView
-convertTableEntryToView tests entry = do
+convertTableEntryToView :: DisclosedInfo -> [Entity Test] -> TableEntry -> HandlerFor App SubmissionView
+convertTableEntryToView disclosedInfo tests entry = do
   mUserEnt <- maybeAuthPossiblyByToken
 
   isReevaluable <- runDB $ canBeReevaluated $ entityKey $ tableEntrySubmission entry
@@ -1625,7 +1633,7 @@ convertTableEntryToView tests entry = do
                                                      (map entityVal $ tableEntryParams entry),
     submissionViewTags = Import.map convertTagInfoToView $ tableEntryTagsInfo entry,
     submissionViewHash = fromSHA1ToText $ submissionCommit submission,
-    submissionViewEvaluations = catMaybes $ Import.map (convertEvaluationToView $ tableEntryMapping entry) tests,
+    submissionViewEvaluations = catMaybes $ applyDisclosedInfoOnLast disclosedInfo (convertEvaluationToView $ tableEntryMapping entry) tests,
     submissionViewIsOwner = (entityKey <$> mUserEnt) == Just (submissionSubmitter submission),
     submissionViewIsReevaluable = isReevaluable,
     submissionViewIsVisible = isVisible,
@@ -1636,11 +1644,13 @@ convertTableEntryToView tests entry = do
 
 fetchChallengeSubmissionsView :: ((Entity Submission) -> Bool) -> Text -> Handler SubmissionsView
 fetchChallengeSubmissionsView condition challengeName = do
-  Entity challengeId _ <- runDB $ getBy404 $ UniqueName challengeName
+  Entity challengeId challenge <- runDB $ getBy404 $ UniqueName challengeName
+  disclosedInfo <- fetchDisclosedInfo challenge
+
   (evaluationMaps, tests') <- runDB $ getChallengeSubmissionInfos 1 condition (const True) id challengeId
   let tests = sortBy testComparator tests'
 
-  submissions <- mapM (convertTableEntryToView tests) evaluationMaps
+  submissions <- mapM (convertTableEntryToView disclosedInfo tests) evaluationMaps
 
   return $ SubmissionsView {
     submissionsViewSubmissions = submissions,
@@ -1665,7 +1675,7 @@ getChallengeAllSubmissionsR' (Entity _ challenge) = getChallengeSubmissions (\_ 
 
 data EvaluationView = EvaluationView {
   evaluationViewScore :: Text,
-  evaluationViewFullScore :: Double,
+  evaluationViewFullScore :: Maybe Double,
   evaluationViewTest :: TestReference
 }
 
@@ -1881,7 +1891,9 @@ challengeAllSubmissionsWidget :: Maybe UserId
                                 -> [Text]
                                 -> WidgetFor App ()
 challengeAllSubmissionsWidget muserId challenge scheme challengeRepo submissions tests params =
-  $(widgetFile "challenge-all-submissions")
+  do
+    disclosedInfo <- liftHandler $ fetchDisclosedInfo challenge
+    $(widgetFile "challenge-all-submissions")
   where delta = Number 4
         higherTheBetterArray = getIsHigherTheBetterArray $ map entityVal tests
 

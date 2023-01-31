@@ -2,7 +2,7 @@
   $if null tableEntries
      <p>No results available. The submission is probably broken.
   $else
-    ^{Table.buildBootstrap (variantTable paramNames tests) strippedTableEntries}
+    ^{Table.buildBootstrap (variantTable paramNames disclosedInfo tests) strippedTableEntries}
 
     $if not (null commonParams)
         ^{Table.buildBootstrap paramsTable $ commonParams}
