@@ -1,3 +1,13 @@
+## 3.22.0 (2022-01-31)
+
+Enhancements:
+
+* add metadata for whether disclose or not evaluation results for the main test
+
+## 3.21.0 (2022-11-19)
+
+Switch to LTS 19.25
+
 ## 3.20.3 (2022-11-18)
 
 Last version before switching to LTS 19.25.

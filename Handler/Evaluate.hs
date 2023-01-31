@@ -207,11 +207,15 @@ checkOrInsertEvaluation repoDir forceEvaluation chan version out = do
   challenge <- runDB $ get404 $ testChallenge test
   maybeEvaluation <- runDB $ fetchTheEvaluation out version
 
+  disclosedInfo <- fetchDisclosedInfo challenge
+
   if not forceEvaluation && isJust maybeEvaluation
    then
     do
       let Just (Entity _ evaluation) = maybeEvaluation
-      msg chan $ concat ["Already evaluated with score ", (fromMaybe "???" $ formatNonScientifically <$> evaluationScore evaluation)]
+      case disclosedInfo of
+        DisclosedInfo Nothing -> msg chan $ concat ["Already evaluated with score ", (fromMaybe "???" $ formatNonScientifically <$> evaluationScore evaluation)]
+        _ -> return ()
    else
     do
       msg chan $ "Start evaluation..."
@@ -225,7 +229,9 @@ checkOrInsertEvaluation repoDir forceEvaluation chan version out = do
           let defaultFormattingOpts = FormattingOptions {
                 decimalPlaces = Nothing,
                 asPercentage = False }
-          msg chan $ concat [ "Evaluated! Score ", (T.pack $ formatTheResult defaultFormattingOpts result) ]
+          case disclosedInfo of
+            DisclosedInfo Nothing -> msg chan $ concat [ "Evaluated! Score ", (T.pack $ formatTheResult defaultFormattingOpts result) ]
+            _ -> msg chan "Evaluated!"
           time <- liftIO getCurrentTime
           let (pointResult, errorBound) = extractResult result
           if (isJust maybeEvaluation)

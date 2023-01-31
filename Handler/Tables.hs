@@ -354,6 +354,10 @@ getLeaderboardEntriesByCriterion maxPriority challengeId condition preselector s
   (evaluationMaps, tests) <- runDB $ getChallengeSubmissionInfos maxPriority condition (const True) preselector challengeId
   let mainTests = getMainTests tests
   let mMainTestEnt = getMainTest tests
+
+  challenge <- runDB $ get404 challengeId
+  disclosedInfo <- fetchDisclosedInfo challenge
+
   case mMainTestEnt of
     Nothing -> return ([], ([], []))
     Just mainTestEnt -> do
@@ -364,13 +368,16 @@ getLeaderboardEntriesByCriterion maxPriority challengeId condition preselector s
                      $ filter (\entry -> member mainTestRef $ tableEntryMapping entry)
                      $ evaluationMaps
       let auxItemsMap = Map.fromListWith (++) auxItems
-      let entryComparator a b =
-            (compareMajorVersions (leaderboardVersion a) (leaderboardVersion b))
-            <>
-            ((compareResult $ Just mainTest) (evaluationScore $ leaderboardEvaluationMap a Map.! mainTestRef)
-             (evaluationScore $ leaderboardEvaluationMap b Map.! mainTestRef))
-            <>
-            (compareVersions (leaderboardVersion a) (leaderboardVersion b))
+      let entryComparator a b = case disclosedInfo of
+                                  DisclosedInfo Nothing ->
+                                              (compareMajorVersions (leaderboardVersion a) (leaderboardVersion b))
+                                              <>
+                                              ((compareResult $ Just mainTest) (evaluationScore $ leaderboardEvaluationMap a Map.! mainTestRef)
+                                                                               (evaluationScore $ leaderboardEvaluationMap b Map.! mainTestRef))
+                                              <>
+                                              (compareVersions (leaderboardVersion a) (leaderboardVersion b))
+                                  DisclosedInfo (Just 0) ->
+                                              (submissionStamp (leaderboardBestSubmission a) `compare` submissionStamp (leaderboardBestSubmission b))
       entries' <- mapM (toLeaderboardEntry challengeId mainTests)
                  $ filter (\ll -> not (null ll))
                  $ map snd
@@ -514,6 +521,9 @@ getChallengeSubmissionInfosForVersion maxMetricPriority condition variantConditi
   let tests = filter (\t -> (evaluationSchemePriority $ testMetric $ entityVal t) <= maxMetricPriority) tests'
   let mainTest = getMainTest tests
 
+  challenge <- get404 challengeId
+  disclosedInfo <- fetchDisclosedInfoBare challenge
+
   allSubmissionsVariants <- E.select $ E.from $ \(submission, variant) -> do
      E.where_ (submission ^. SubmissionChallenge E.==. E.val challengeId
                E.&&. submission ^. SubmissionIsHidden E.==. E.val False
@@ -530,7 +540,9 @@ getChallengeSubmissionInfosForVersion maxMetricPriority condition variantConditi
         $ filter (\(_, (s, _)) -> condition s)
         $ map (\(rank, (_, sv)) -> (rank, sv))
         $ zip [1..]
-        $ sortBy (\(s1, _) (s2, _) -> compareResult (entityVal <$> mainTest) s2 s1)
+        $ sortBy (\(s1, (e1, _)) (s2, (e2, _)) -> case disclosedInfo of
+                     DisclosedInfo Nothing -> compareResult (entityVal <$> mainTest) s2 s1
+                     DisclosedInfo (Just 0) -> (submissionStamp (entityVal e2) `compare` submissionStamp (entityVal e1)))
         $ zip scores allSubmissionsVariants
 
   allTests <- selectList [] [Asc TestName]

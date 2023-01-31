@@ -854,9 +854,13 @@ fetchTheEvaluation :: (MonadIO m, PersistUniqueRead backend, BaseBackend backend
 fetchTheEvaluation out version =
   getBy $ UniqueEvaluationTestChecksumVersion (outTest out) (outChecksum out) version
 
-fetchDisclosedInfo challenge = do
-  Entity _ version <- runDB $ getBy404 $ UniqueVersionByCommit $ challengeVersion challenge
+
+fetchDisclosedInfo challenge = runDB $ fetchDisclosedInfoBare challenge
+
+fetchDisclosedInfoBare challenge = do
+  Entity _ version <- getBy404 $ UniqueVersionByCommit $ challengeVersion challenge
   return $ DisclosedInfo $ versionDisclosed version
+
 
 fetchDisclosedInfoForTest challengeId (Entity _ test) = do
   -- TODO this is an approximation, actually should be checked whether a main test
