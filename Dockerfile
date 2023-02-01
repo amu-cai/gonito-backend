@@ -26,7 +26,7 @@ WORKDIR /root/gonito
 
 RUN stack install --system-ghc && rm -rf /root/.stack
 
-FROM ubuntu:16.04 AS gonito-run
+FROM ubuntu:18.04 AS gonito-run
 
 RUN apt-get -y update && apt-get -y install git git-annex libcairo2 libpq5 locales && apt-get clean && rm -rf /var/lib/apt/lists/*
 
