@@ -27,6 +27,7 @@
 /api/challenge-my-submissions/#Text ChallengeMySubmissionsJsonR GET
 /api/challenge-all-submissions/#Text ChallengeAllSubmissionsJsonR GET
 /api/user-info UserInfoR GET
+/api/full-user-info FullUserInfoR GET
 /api/add-user AddUserR GET
 /api/challenge-submission/#Text ChallengeSubmissionJsonR POST
 /api/make-public/#SubmissionId MakePublicJsonR GET

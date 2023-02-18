@@ -28,6 +28,8 @@ import Data.Aeson.Key (fromText)
 
 import Data.HashMap.Strict.InsOrd (fromList)
 
+import Data.Text (strip)
+
 getYourAccountR :: Handler Html
 getYourAccountR = do
     userId <- requireAuthId
@@ -68,7 +70,7 @@ fetchIndividualKey (Just localId) = do
   fhandle <- liftIO $ openFile individualPubKeyPath ReadMode
   contents <- liftIO $ System.IO.hGetContents fhandle
 
-  return $ Just $ pack contents
+  return $ Just $ strip $ pack contents
 
 postYourAccountR :: Handler Html
 postYourAccountR = do
@@ -195,6 +197,46 @@ getUserInfoR = do
   (Entity _ user) <- requireAuthPossiblyByToken
   return $ String $ userIdent user
 
+data FullUserInfoView = FullUserInfoView {
+  fullUserInfoViewIdent :: Text,
+  fullUserInfoViewName :: Maybe Text,
+  fullUserInfoViewLocalId :: Maybe Text,
+  fullUserInfoViewIndividualKey :: Maybe Text
+}
+
+instance ToSchema FullUserInfoView where
+  declareNamedSchema _ = do
+    stringSchema <- declareSchemaRef (DPR.Proxy :: DPR.Proxy String)
+    return $ NamedSchema (Just "FullUserInfo") $ mempty
+        & type_ .~ Just SwaggerObject
+        & properties .~
+           fromList [  ("ident", stringSchema)
+                     , ("name", stringSchema)
+                     , ("localId", stringSchema)
+                     , ("individualKey", stringSchema)
+                    ]
+        & required .~ [ "ident" ]
+
+
+instance ToJSON FullUserInfoView where
+    toJSON entry = object
+        [ "ident" .= fullUserInfoViewIdent entry
+        , "name" .= fullUserInfoViewName entry
+        , "localId" .= fullUserInfoViewLocalId entry
+        , "individualKey" .= fullUserInfoViewIndividualKey entry
+        ]
+
+getFullUserInfoR :: Handler Value
+getFullUserInfoR = do
+  (Entity _ user) <- requireAuthPossiblyByToken
+  mIndividualKey <- fetchIndividualKey $ userLocalId user
+  return $ toJSON $ FullUserInfoView {
+    fullUserInfoViewIdent = userIdent user,
+    fullUserInfoViewName = userName user,
+    fullUserInfoViewLocalId = userLocalId user,
+    fullUserInfoViewIndividualKey = mIndividualKey
+    }
+
 userInfoApi :: Swagger
 userInfoApi = spec & definitions .~ defs
   where
@@ -212,5 +254,25 @@ declareUserInfoApi = do
                                         & parameters .~ [ ]
                                         & produces ?~ MimeList ["application/json"]
                                         & description ?~ "Returns the identifier of the user"
+                                        & at 200 ?~ Inline response))
+                 ]
+
+fullUserInfoApi :: Swagger
+fullUserInfoApi = spec & definitions .~ defs
+  where
+    (defs, spec) = runDeclare declareFullUserInfoApi mempty
+
+declareFullUserInfoApi :: Declare (Definitions Schema) Swagger
+declareFullUserInfoApi = do
+  -- param schemas
+  response <- declareResponse (Proxy :: Proxy FullUserInfoView)
+
+  return $ mempty
+    & paths .~
+        fromList [ ("/api/full-user-info",
+                    mempty & DS.get ?~ (mempty
+                                        & parameters .~ [ ]
+                                        & produces ?~ MimeList ["application/json"]
+                                        & description ?~ "Returns info about the user"
                                         & at 200 ?~ Inline response))
                  ]
