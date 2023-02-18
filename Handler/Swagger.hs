@@ -8,6 +8,7 @@ import Handler.ShowChallenge
 import Handler.Query
 import Handler.Tags
 import Handler.Team
+import Handler.YourAccount
 
 
 import Control.Lens hiding ((.=))

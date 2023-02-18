@@ -1,6 +1,6 @@
 module Handler.YourAccount where
 
-import Import
+import Import hiding (Proxy, fromList)
 import Yesod.Form.Bootstrap3 (BootstrapFormLayout (..), renderBootstrap3, bfs)
 
 import Data.Conduit.Binary
@@ -12,7 +12,21 @@ import System.Process
 import System.IO
 
 import Handler.Common (passwordConfirmField, updatePassword, isPasswordAcceptable, tooWeakPasswordMessage)
+import Handler.JWT
 import Handler.Shared
+
+import Data.Swagger hiding (get, tags, delete)
+import qualified Data.Swagger as DS
+
+import Data.Swagger.Declare
+import Control.Lens hiding ((.=), (^.))
+import Data.Proxy as DPR
+
+import Data.Aeson hiding (Key)
+import Data.Aeson.KeyMap hiding (fromList, map, filter, null, foldr, delete, insert)
+import Data.Aeson.Key (fromText)
+
+import Data.HashMap.Strict.InsOrd (fromList)
 
 getYourAccountR :: Handler Html
 getYourAccountR = do
@@ -175,3 +189,28 @@ getAvatarR userId = do
        sendResponse (typePng, toContent avatarBytes)
      Nothing -> do
        sendFile typeSvg "static/images/male-avatar.svg"
+
+getUserInfoR :: Handler Value
+getUserInfoR = do
+  (Entity _ user) <- requireAuthPossiblyByToken
+  return $ String $ userIdent user
+
+userInfoApi :: Swagger
+userInfoApi = spec & definitions .~ defs
+  where
+    (defs, spec) = runDeclare declareUserInfoApi mempty
+
+declareUserInfoApi :: Declare (Definitions Schema) Swagger
+declareUserInfoApi = do
+  -- param schemas
+  response <- declareResponse (Proxy :: Proxy String)
+
+  return $ mempty
+    & paths .~
+        fromList [ ("/api/user-info",
+                    mempty & DS.get ?~ (mempty
+                                        & parameters .~ [ ]
+                                        & produces ?~ MimeList ["application/json"]
+                                        & description ?~ "Returns the identifier of the user"
+                                        & at 200 ?~ Inline response))
+                 ]

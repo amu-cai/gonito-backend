@@ -1336,12 +1336,6 @@ submissionForm userId defaultUrl defBranch defaultGitAnnexRemote defaultTeam = r
             myTeams <- fetchUserTeams userId
             optionsPairs $ map (\t -> (teamIdent $ entityVal t, entityKey t)) myTeams
 
-
-getUserInfoR :: Handler Value
-getUserInfoR = do
-  (Entity _ user) <- requireAuthPossiblyByToken
-  return $ String $ userIdent user
-
 getCurrentTimeR :: Handler Value
 getCurrentTimeR = do
   theNow <- liftIO $ getCurrentTime
@@ -1441,27 +1435,6 @@ declareAddUserApi = do
                                         & parameters .~ [ ]
                                         & produces ?~ MimeList ["application/json"]
                                         & description ?~ "Creates a new user"
-                                        & at 200 ?~ Inline response))
-                 ]
-
-
-userInfoApi :: Swagger
-userInfoApi = spec & definitions .~ defs
-  where
-    (defs, spec) = runDeclare declareUserInfoApi mempty
-
-declareUserInfoApi :: Declare (Definitions Schema) Swagger
-declareUserInfoApi = do
-  -- param schemas
-  response <- declareResponse (Proxy :: Proxy String)
-
-  return $ mempty
-    & paths .~
-        fromList [ ("/api/user-info",
-                    mempty & DS.get ?~ (mempty
-                                        & parameters .~ [ ]
-                                        & produces ?~ MimeList ["application/json"]
-                                        & description ?~ "Returns the identifier of the user"
                                         & at 200 ?~ Inline response))
                  ]
 
