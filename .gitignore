@@ -25,3 +25,4 @@ stack.yaml.lock
 .env
 certs/
 .idea
+helpers/sample-challenge-*
