@@ -1,3 +1,9 @@
+## 3.23.0 (2022-02-19)
+
+Enhancements:
+
+* add full-user-info end-point
+
 ## 3.22.0 (2022-01-31)
 
 Enhancements:

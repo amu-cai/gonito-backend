@@ -1,5 +1,5 @@
 name:              gonito
-version:           3.22.0
+version:           3.23.0
 cabal-version:     >= 1.8
 build-type:        Simple
 homepage:          http://gonito.net
