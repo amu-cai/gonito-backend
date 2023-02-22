@@ -23,8 +23,6 @@ import Control.Lens hiding ((.=), (^.))
 import Data.Proxy as DPR
 
 import Data.Aeson hiding (Key)
-import Data.Aeson.KeyMap hiding (fromList, map, filter, null, foldr, delete, insert)
-import Data.Aeson.Key (fromText)
 
 import Data.HashMap.Strict.InsOrd (fromList)
 
@@ -215,7 +213,7 @@ instance ToSchema FullUserInfoView where
   declareNamedSchema _ = do
     stringSchema <- declareSchemaRef (DPR.Proxy :: DPR.Proxy String)
     return $ NamedSchema (Just "FullUserInfo") $ mempty
-        & type_ .~ Just SwaggerObject
+        & type_ .~ SwaggerObject
         & properties .~
            fromList [  ("ident", stringSchema)
                      , ("name", stringSchema)

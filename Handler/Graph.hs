@@ -50,9 +50,9 @@ getChallengeParamGraphDataR challengeName testId paramName = do
                        $ map (\(ParamGraphItem entry label x y) -> (label, (entry, x, y))) items
 
           return $ object [
-            "xs" .= object (map (\(ParamGraphSeries seriesName _) -> ((fromText seriesName) .= (xSeriesName seriesName))) series),
+            "xs" .= object (map (\(ParamGraphSeries seriesName _) -> (seriesName .= (xSeriesName seriesName))) series),
             "columns" .= ((map (toYColumn $ testPrecision test) series) ++ (map toXColumn series))
-                          ]
+                  ]
 
 toYColumn :: Maybe Int -> ParamGraphSeries -> [Text]
 toYColumn mPrecision (ParamGraphSeries seriesName items) =
