@@ -1,6 +1,6 @@
 module Handler.YourAccount where
 
-import Import hiding (Proxy, fromList)
+import Import hiding (Proxy, fromList, encodeUtf8)
 import Yesod.Form.Bootstrap3 (BootstrapFormLayout (..), renderBootstrap3, bfs)
 
 import Data.Conduit.Binary
@@ -29,6 +29,9 @@ import Data.Aeson.Key (fromText)
 import Data.HashMap.Strict.InsOrd (fromList)
 
 import Data.Text (strip)
+import Data.Text.Encoding (encodeUtf8)
+
+import Data.Digest.Pure.MD5
 
 getYourAccountR :: Handler Html
 getYourAccountR = do
@@ -37,7 +40,7 @@ getYourAccountR = do
 
     enableTriggerToken userId (userTriggerToken user)
 
-    mIndividualKey <- fetchIndividualKey $ userLocalId user
+    mIndividualKey <- fetchIndividualKey user
 
     keyS <- runDB $ selectFirst [PublicKeyUser ==. userId] []
     let key = publicKeyPubkey <$> entityVal <$> keyS
@@ -46,15 +49,18 @@ getYourAccountR = do
         setTitle "Your account"
         $(widgetFile "your-account")
 
-fetchIndividualKey :: Maybe Text -> Handler (Maybe Text)
-fetchIndividualKey Nothing = return Nothing
-fetchIndividualKey (Just localId) = do
+fetchIndividualKey :: User -> Handler (Maybe Text)
+fetchIndividualKey user = do
+  let keyName = case userLocalId user of
+                  Just localId -> localId
+                  Nothing -> pack $ show $ md5 $ fromStrict $ encodeUtf8 $ userIdent user
+
   arenaDir <- arena
   let individualKeysDir = arenaDir ++ "/individual-keys"
   liftIO $ createDirectoryIfMissing True individualKeysDir
 
-  let individualKeyPath = (unpack individualKeysDir) ++ "/" ++ (unpack localId)
-  let individualComment = (unpack localId) ++ "@gonito"
+  let individualKeyPath = (unpack individualKeysDir) ++ "/" ++ (unpack keyName)
+  let individualComment = (unpack keyName) ++ "@gonito"
 
   let individualPubKeyPath = individualKeyPath ++ ".pub"
 
@@ -88,8 +94,9 @@ postYourAccountR = do
           if checkPassword mPassword
             then
              do
-              mIndKey <- fetchIndividualKey localId
               updateUserAccount userId name localId mPassword sshPubKey mAltRepoScheme avatarFile anonimised
+              user' <- runDB $ get404 userId
+              mIndKey <- fetchIndividualKey user'
               return mIndKey
              else
               do
@@ -229,7 +236,7 @@ instance ToJSON FullUserInfoView where
 getFullUserInfoR :: Handler Value
 getFullUserInfoR = do
   (Entity _ user) <- requireAuthPossiblyByToken
-  mIndividualKey <- fetchIndividualKey $ userLocalId user
+  mIndividualKey <- fetchIndividualKey user
   return $ toJSON $ FullUserInfoView {
     fullUserInfoViewIdent = userIdent user,
     fullUserInfoViewName = userName user,

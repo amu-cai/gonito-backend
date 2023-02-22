@@ -167,6 +167,11 @@ library
                  , insert-ordered-containers
                  , yesod-websockets
                  , MissingH
+                 , modern-uri
+                 , data-default-class
+                 , parser-combinators
+                 , http-client-tls
+                 , pureMD5
 
 executable         gonito
     if flag(library-only)
