@@ -1,3 +1,9 @@
+## 3.24.0 (2022-02-22)
+
+Enhancements:
+
+* individual key is generated even if no local ID is set
+
 ## 3.23.0 (2022-02-19)
 
 Enhancements:

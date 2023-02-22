@@ -53,7 +53,7 @@ database:
   database: "_env:PGDATABASE:gonito"
   poolsize: "_env:PGPOOLSIZE:10"
 
-copyright: © Filip Graliński, Gonito ver. 3.23.0
+copyright: © Filip Graliński, Centrum Sztucznej Inteligencji UAM, Gonito ver. 3.24.0
 
 admin-user: "_env:ADMINUSER:"
 admin-password: "_env:ADMINPASS:"
