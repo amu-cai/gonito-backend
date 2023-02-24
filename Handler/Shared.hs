@@ -501,6 +501,8 @@ fetchIndividualKeyPath user = do
    else
     return ()
 
+  _ <- liftIO $ callProcess "/usr/bin/chmod" ["go-rwx", individualKeyPath]
+
   return $ Just individualPubKeyPath
 
 fetchIndividualKey :: User -> Handler (Maybe Text)
