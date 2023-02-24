@@ -24,6 +24,9 @@ import Control.Concurrent.Lifted (threadDelay)
 import Control.Concurrent (forkIO)
 
 import System.Directory
+import System.IO hiding (readFile)
+import System.Process
+import Data.Digest.Pure.MD5
 
 import qualified Crypto.Hash.SHA1 as CHS
 
@@ -474,22 +477,34 @@ cloneRepo' userId repoCloningSpec chan = do
 fixGitRepoUrl :: Text -> Text
 fixGitRepoUrl = id
 
-fetchIndividualKeyPath :: User -> HandlerFor App (Maybe FilePath)
-fetchIndividualKeyPath user = do
-  arenaDir <- arena
-  let mLocalId = userLocalId user
-  case mLocalId of
-    Just localId -> do
-      let individualKeysDir = arenaDir ++ "/individual-keys"
-      let individualKeyPath = (unpack individualKeysDir) ++ "/" ++ (unpack localId)
+fetchIndividualKey :: User -> Handler (Maybe Text)
+fetchIndividualKey user = do
+  let keyName = case userLocalId user of
+                  Just localId -> localId
+                  Nothing -> pack $ show $ md5 $ fromStrict $ encodeUtf8 $ userIdent user
 
-      isKeyGenerated <- liftIO $ doesFileExist individualKeyPath
-      if isKeyGenerated
-        then
-          return $ Just individualKeyPath
-        else
-          return Nothing
-    Nothing -> return Nothing
+  arenaDir <- arena
+  let individualKeysDir = arenaDir ++ "/individual-keys"
+  liftIO $ createDirectoryIfMissing True individualKeysDir
+
+  let individualKeyPath = (unpack individualKeysDir) ++ "/" ++ (unpack keyName)
+  let individualComment = (unpack keyName) ++ "@gonito"
+
+  let individualPubKeyPath = individualKeyPath ++ ".pub"
+
+  isKeyGenerated <- liftIO $ doesFileExist individualPubKeyPath
+  if not isKeyGenerated
+   then
+    do
+          _ <- liftIO $ callProcess "/usr/bin/ssh-keygen" ["-t", "RSA", "-f", individualKeyPath, "-N",  "", "-C", individualComment]
+          return ()
+   else
+    return ()
+
+  fhandle <- liftIO $ openFile individualPubKeyPath ReadMode
+  contents <- liftIO $ System.IO.hGetContents fhandle
+
+  return $ Just $ T.strip $ pack contents
 
 isUserLocalRepo :: User -> RepoCloningSpec -> Bool
 isUserLocalRepo user repoCloningSpec =
@@ -525,12 +540,12 @@ getGitEnv mUserId repoCloningSpec = do
                    return $ Just []
                  else
                   do
-                   mInvidualPrivateKey <- fetchIndividualKeyPath user
+                   mInvidualPrivateKey <- fetchIndividualKey user
                    case mInvidualPrivateKey of
                      Just individualPrivateKey -> do
                        curr_dir <- liftIO $ getCurrentDirectory
                        return $ Just [("GIT_SSH_COMMAND",
-                                       "/usr/bin/ssh -o StrictHostKeyChecking=no  -i " ++ curr_dir ++ "/" ++ individualPrivateKey)]
+                                       "/usr/bin/ssh -o StrictHostKeyChecking=no  -i " ++ curr_dir ++ "/" ++ unpack individualPrivateKey)]
                      Nothing -> return $ Nothing
           Nothing -> return $ Nothing
 

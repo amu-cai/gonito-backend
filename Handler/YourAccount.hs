@@ -29,8 +29,6 @@ import Data.HashMap.Strict.InsOrd (fromList)
 import Data.Text (strip)
 import Data.Text.Encoding (encodeUtf8)
 
-import Data.Digest.Pure.MD5
-
 getYourAccountR :: Handler Html
 getYourAccountR = do
     userId <- requireAuthId
@@ -46,35 +44,6 @@ getYourAccountR = do
     defaultLayout $ do
         setTitle "Your account"
         $(widgetFile "your-account")
-
-fetchIndividualKey :: User -> Handler (Maybe Text)
-fetchIndividualKey user = do
-  let keyName = case userLocalId user of
-                  Just localId -> localId
-                  Nothing -> pack $ show $ md5 $ fromStrict $ encodeUtf8 $ userIdent user
-
-  arenaDir <- arena
-  let individualKeysDir = arenaDir ++ "/individual-keys"
-  liftIO $ createDirectoryIfMissing True individualKeysDir
-
-  let individualKeyPath = (unpack individualKeysDir) ++ "/" ++ (unpack keyName)
-  let individualComment = (unpack keyName) ++ "@gonito"
-
-  let individualPubKeyPath = individualKeyPath ++ ".pub"
-
-  isKeyGenerated <- liftIO $ doesFileExist individualPubKeyPath
-  if not isKeyGenerated
-   then
-    do
-          _ <- liftIO $ callProcess "/usr/bin/ssh-keygen" ["-t", "RSA", "-f", individualKeyPath, "-N",  "", "-C", individualComment]
-          return ()
-   else
-    return ()
-
-  fhandle <- liftIO $ openFile individualPubKeyPath ReadMode
-  contents <- liftIO $ System.IO.hGetContents fhandle
-
-  return $ Just $ strip $ pack contents
 
 postYourAccountR :: Handler Html
 postYourAccountR = do
