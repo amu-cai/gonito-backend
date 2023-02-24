@@ -5,7 +5,7 @@
 
 module Handler.Shared where
 
-import Import
+import Import hiding (replace)
 
 import qualified Data.IntMap            as IntMap
 
@@ -17,6 +17,8 @@ import System.Exit
 import Web.Announcements
 
 import qualified Data.Text as T
+
+import Data.List.Utils (replace)
 
 import Database.Persist.Sql (fromSqlKey)
 
@@ -479,6 +481,13 @@ fixGitRepoUrl = id
 
 fetchIndividualKeyPath :: User -> Handler (Maybe FilePath)
 fetchIndividualKeyPath user = do
+  mIndividualPubKeyPath <- fetchIndividualPubKeyPath user
+  case mIndividualPubKeyPath of
+    Just individualPubKeyPath -> return $ Just $ replace ".pub" "" individualPubKeyPath
+    Nothing -> return Nothing
+
+fetchIndividualPubKeyPath :: User -> Handler (Maybe FilePath)
+fetchIndividualPubKeyPath user = do
   let keyName = case userLocalId user of
                   Just localId -> localId
                   Nothing -> pack $ show $ md5 $ fromStrict $ encodeUtf8 $ userIdent user
@@ -507,7 +516,7 @@ fetchIndividualKeyPath user = do
 
 fetchIndividualKey :: User -> Handler (Maybe Text)
 fetchIndividualKey user = do
-  mIndividualPubKeyPath <- fetchIndividualKeyPath user
+  mIndividualPubKeyPath <- fetchIndividualPubKeyPath user
 
   case mIndividualPubKeyPath of
     Just individualPubKeyPath -> do
