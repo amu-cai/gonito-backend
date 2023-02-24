@@ -551,9 +551,8 @@ getGitEnv mUserId repoCloningSpec = do
                    mInvidualPrivateKey <- fetchIndividualKeyPath user
                    case mInvidualPrivateKey of
                      Just individualPrivateKey -> do
-                       curr_dir <- liftIO $ getCurrentDirectory
                        return $ Just [("GIT_SSH_COMMAND",
-                                       "/usr/bin/ssh -o StrictHostKeyChecking=no  -i " ++ curr_dir ++ "/" ++ individualPrivateKey)]
+                                       "/usr/bin/ssh -o StrictHostKeyChecking=no  -i " ++ individualPrivateKey)]
                      Nothing -> return $ Nothing
           Nothing -> return $ Nothing
 
