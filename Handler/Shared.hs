@@ -477,8 +477,8 @@ cloneRepo' userId repoCloningSpec chan = do
 fixGitRepoUrl :: Text -> Text
 fixGitRepoUrl = id
 
-fetchIndividualKey :: User -> Handler (Maybe Text)
-fetchIndividualKey user = do
+fetchIndividualKeyPath :: User -> Handler (Maybe FilePath)
+fetchIndividualKeyPath user = do
   let keyName = case userLocalId user of
                   Just localId -> localId
                   Nothing -> pack $ show $ md5 $ fromStrict $ encodeUtf8 $ userIdent user
@@ -501,10 +501,18 @@ fetchIndividualKey user = do
    else
     return ()
 
-  fhandle <- liftIO $ openFile individualPubKeyPath ReadMode
-  contents <- liftIO $ System.IO.hGetContents fhandle
+  return $ Just individualPubKeyPath
 
-  return $ Just $ T.strip $ pack contents
+fetchIndividualKey :: User -> Handler (Maybe Text)
+fetchIndividualKey user = do
+  mIndividualPubKeyPath <- fetchIndividualKeyPath user
+
+  case mIndividualPubKeyPath of
+    Just individualPubKeyPath -> do
+      fhandle <- liftIO $ openFile individualPubKeyPath ReadMode
+      contents <- liftIO $ System.IO.hGetContents fhandle
+      return $ Just $ T.strip $ pack contents
+    Nothing -> return Nothing
 
 isUserLocalRepo :: User -> RepoCloningSpec -> Bool
 isUserLocalRepo user repoCloningSpec =
@@ -540,12 +548,12 @@ getGitEnv mUserId repoCloningSpec = do
                    return $ Just []
                  else
                   do
-                   mInvidualPrivateKey <- fetchIndividualKey user
+                   mInvidualPrivateKey <- fetchIndividualKeyPath user
                    case mInvidualPrivateKey of
                      Just individualPrivateKey -> do
                        curr_dir <- liftIO $ getCurrentDirectory
                        return $ Just [("GIT_SSH_COMMAND",
-                                       "/usr/bin/ssh -o StrictHostKeyChecking=no  -i " ++ curr_dir ++ "/" ++ unpack individualPrivateKey)]
+                                       "/usr/bin/ssh -o StrictHostKeyChecking=no  -i " ++ curr_dir ++ "/" ++ individualPrivateKey)]
                      Nothing -> return $ Nothing
           Nothing -> return $ Nothing
 
