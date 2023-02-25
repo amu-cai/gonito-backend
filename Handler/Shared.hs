@@ -787,11 +787,20 @@ formatNonScientifically = T.pack . (printf "%f")
 data DisclosedInfo = DisclosedInfo (Maybe Int)
 undisclosed = "UNDISCLOSED"
 
-applyDisclosedInfoOnLast :: DisclosedInfo -> (DisclosedInfo -> a -> b) -> [a] -> [b]
-applyDisclosedInfoOnLast _ _ [] = []
-applyDisclosedInfoOnLast disclosedInfo fun [e] = [fun disclosedInfo e]
-applyDisclosedInfoOnLast disclosedInfo fun (h:t) =
-  (fun (DisclosedInfo Nothing) h : applyDisclosedInfoOnLast disclosedInfo fun t)
+-- applies disclosed information on the last test (which is considered the main test) or,
+-- to be precise, to all test whose name is the same as the last test
+applyDisclosedInfoOnLast :: DisclosedInfo -> (DisclosedInfo -> Entity Test -> b) -> [Entity Test] -> [b]
+applyDisclosedInfoOnLast disclosedInfo fun [] = []
+applyDisclosedInfoOnLast disclosedInfo fun l@(h:t) = applyDisclosedInfoOnLast' lastTest disclosedInfo fun l
+  where lastTest = testName $ entityVal $ last (ncons h t)
+
+applyDisclosedInfoOnLast' :: Text -> DisclosedInfo -> (DisclosedInfo -> Entity Test -> b) -> [Entity Test] -> [b]
+applyDisclosedInfoOnLast' _ _ _ [] = []
+applyDisclosedInfoOnLast' lastTest disclosedInfo fun (h:t) =
+  (fun disclosedInfo' h) : applyDisclosedInfoOnLast' lastTest disclosedInfo fun t
+  where disclosedInfo' = if (testName $ entityVal h) == lastTest
+                         then disclosedInfo
+                         else (DisclosedInfo Nothing)
 
 formatFullScore :: DisclosedInfo -> Maybe Evaluation -> Text
 formatFullScore (DisclosedInfo (Just 0)) _ = undisclosed
