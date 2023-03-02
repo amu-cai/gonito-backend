@@ -61,7 +61,9 @@ import qualified Data.Vector as DV
 arena :: Handler FilePath
 arena = do
   app <- getYesod
-  return $ (appVarDir $ appSettings app) </> "arena"
+  let p = (appVarDir $ appSettings app) </> "arena"
+  arenaPath <- liftIO $ makeAbsolute p
+  return arenaPath
 
 gitPath :: FilePath
 gitPath = "/usr/bin/git"
@@ -333,20 +335,26 @@ cloneRepo repoCloningSpec chan = do
       return Nothing
     Nothing -> cloneRepo' userId repoCloningSpec chan
 
-updateRepo :: Key Repo -> Channel -> Handler Bool
-updateRepo repoId chan = do
+updateRepo :: Key User -> Key Repo -> Channel -> Handler Bool
+updateRepo userId repoId chan = do
   repo <- runDB $ get404 repoId
   repoDir <- getRepoDirOrClone repoId chan
   let branch = repoBranch repo
-  exitCode <- runWithChannel chan $ do
-     runProg (Just repoDir) gitPath ["fetch",
-                                      "origin",
-                                      T.unpack branch,
-                                      "--progress"]
-     runProg (Just repoDir) gitPath ["reset",
-                                      "--hard",
-                                      "FETCH_HEAD"]
-     getStuffUsingGitAnnex repoDir (repoGitAnnexRemote repo)
+  gitEnv <- getGitEnv (Just userId) (repoUrl repo)
+  exitCode <- case gitEnv of
+     Just extraEnv -> do
+       runWithChannel chan $ do
+           runProgWithEnv (Just repoDir) extraEnv gitPath ["fetch",
+                                                           "origin",
+                                                           T.unpack branch,
+                                                           "--progress"]
+           runProg (Just repoDir) gitPath ["reset",
+                                           "--hard",
+                                           "FETCH_HEAD"]
+           getStuffUsingGitAnnex repoDir (repoGitAnnexRemote repo)
+     Nothing -> do
+         return (ExitFailure 1)
+
   case exitCode of
     ExitSuccess -> do
       maybeHeadCommit <- getHeadCommit repoDir chan
@@ -409,7 +417,7 @@ getPossiblyExistingRepo checkRepo userId challengeId repoSpec chan = do
            -- this is not completely right... some other thread
            -- might update this to a different value
            runDB $ update repoId [RepoGitAnnexRemote =. gitAnnexRemote]
-           updateStatus <- updateRepo repoId chan
+           updateStatus <- updateRepo userId repoId chan
            if updateStatus
              then
                return $ Just repoId
@@ -525,17 +533,16 @@ fetchIndividualKey user = do
       return $ Just $ T.strip $ pack contents
     Nothing -> return Nothing
 
-isUserLocalRepo :: User -> RepoCloningSpec -> Bool
-isUserLocalRepo user repoCloningSpec =
+isUserLocalRepo :: User -> Text -> Bool
+isUserLocalRepo user url =
   case userLocalId user of
     Just localId -> (("ssh://gitolite@gonito.net/" <> localId <> "/") `isPrefixOf` url
                     || ("gitolite@gonito.net:" <> localId <> "/") `isPrefixOf` url
                     || ("git@django:/git_data" `isInfixOf` url))
     Nothing -> ("git@django:/git_data" `isInfixOf` url)
-  where url = repoSpecUrl $ cloningSpecRepo repoCloningSpec
 
-getGitEnv :: Maybe UserId -> RepoCloningSpec -> Handler (Maybe [(String, String)])
-getGitEnv mUserId repoCloningSpec = do
+getGitEnv :: Maybe UserId -> Text -> Handler (Maybe [(String, String)])
+getGitEnv mUserId url = do
   maybeUser <- case mUserId of
     Just userId -> do
       user <- runDB $ get404 userId
@@ -548,12 +555,12 @@ getGitEnv mUserId repoCloningSpec = do
      do
        case maybeUser of
           Just (Entity _ user) -> do
-            if isUserLocalRepo user repoCloningSpec
+            if isUserLocalRepo user url
               then
                 return $ Just []
               else
                 do
-                 if ("https://" `isPrefixOf` (repoSpecUrl $ cloningSpecRepo repoCloningSpec))
+                 if ("https://" `isPrefixOf` url)
                  then
                   do
                    return $ Just []
@@ -569,7 +576,7 @@ getGitEnv mUserId repoCloningSpec = do
 
 rawClone :: Maybe UserId -> FilePath -> RepoCloningSpec -> Channel -> Handler ExitCode
 rawClone mUserId tmpRepoDir repoCloningSpec chan = do
- gitEnv <- getGitEnv mUserId repoCloningSpec
+ gitEnv <- getGitEnv mUserId (repoSpecUrl $ cloningSpecRepo repoCloningSpec)
  case gitEnv of
    Just extraEnv -> runWithChannel chan $ do
       let url = repoSpecUrl $ cloningSpecRepo repoCloningSpec
