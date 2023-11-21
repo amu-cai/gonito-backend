@@ -145,6 +145,7 @@ instance Yesod App where
     authRoute _ = Just $ AuthR LoginR
 
     -- Routes not requiring authentication.
+    isAuthorized ViewPublicKeyR _ = return Authorized
     isAuthorized (EditSubmission1R _ _ _) _ = return Authorized
     isAuthorized (AuthR _) _ = return Authorized
     isAuthorized FaviconR _ = return Authorized

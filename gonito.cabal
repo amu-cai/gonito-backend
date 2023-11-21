@@ -61,6 +61,7 @@ library
                      Handler.SubmissionAbility
                      Handler.DeleteSubmission
                      Handler.Wirus
+                     Handler.ViewPublicKey
                      Data.SubmissionConditions
                      Gonito.ExtractMetadata
                      Data.Diff

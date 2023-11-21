@@ -13,6 +13,7 @@ import Handler.SubmissionAbility
 import Handler.DeleteSubmission
 import Handler.EditSubmissionV1
 import Handler.Wirus
+import Handler.ViewPublicKey
 
 
 import Control.Lens hiding ((.=))
@@ -47,6 +48,7 @@ apiDescription = generalApi
                  <> deleteSubmissionApi
                  <> editSubmission1Api
                  <> wirusApi
+                 <> viewPublicKeyApi
 
 generalApi :: Swagger
 generalApi = (mempty :: Swagger)
