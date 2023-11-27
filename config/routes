@@ -11,6 +11,7 @@
 /api/delete-submission/#SubmissionId DeleteSubmissionR POST
 /api/edit-submission/#SubmissionId/#Text/#Text EditSubmission1R POST
 /api/wirus WirusR POST
+/api/wirus-admin WirusAdminR POST
 /api/ViewPublicKey ViewPublicKeyR GET
 
 /create-challenge CreateChallengeR GET POST

@@ -258,6 +258,7 @@ instance Yesod App where
     isAuthorized UserSubmissionAbilityR _ = regularAuthorization
     isAuthorized (DeleteSubmissionR _) _ = return Authorized
     isAuthorized WirusR _ = return Authorized
+    isAuthorized WirusAdminR _ = return Authorized
 
     -- Default to Authorized for now.
     isAuthorized _ _ = isTrustedAuthorized
