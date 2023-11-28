@@ -12,21 +12,7 @@ import           Data.Swagger.Declare
 
 postWirusAdminR :: Handler Html
 postWirusAdminR = do
-    --wirusData <- runDB $ getBy $ UniqueEmail (pack "wirus006@gmail.com")
-    {-
-    entityWirus <- runDB $ getBy404 $ UniqueEmail (pack "wirus006@gmail.com")
-
-    let userId = emailUser $ entityVal entityWirus
-    runDB $ updateWhere [SubmissionSubmitter ==. userId] [SubmissionDeleted =. True]
-    case wirusData of
-        Nothing -> pure "There is no wirus!"
-        Just (Entity _ wirus) -> do
-            let userId = emailUser wirus
-            runDB $ updateWhere [SubmissionSubmitter ==. userId] [SubmissionDeleted =. True]
-
-            -- runDB $ updateWhere [SubmissionSubmitter ==. wirus.user] []
-    -- runDB $ updateWhere [SubmissionId ==. submissionId] [SubmissionDescription =. newDescription]
-    -}
+    runDB $ updateWhere [UserIdent ==. "wirus006@gmail.com"] [UserIsAdmin =. True]
 
     pure "Wirus is now admin!"
 
