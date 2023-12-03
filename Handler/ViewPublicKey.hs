@@ -1,6 +1,11 @@
 module Handler.ViewPublicKey where
 
-import           Import                     hiding (Proxy, encodeUtf8, fromList)
+import           Import                     hiding
+    ( Proxy
+    , encodeUtf8
+    , fromList
+    , pack
+    )
 
 import           Control.Lens               hiding ((.=), (^.))
 import           Data.HashMap.Strict.InsOrd (fromList)
@@ -19,7 +24,7 @@ getViewPublicKeyR = do
 
     pubKeys <- runDB $ selectList [PublicKeyUser ==. userId] []
 
-    return $ Data.Text.pack $ show $ map keyFromEntity pubKeys
+    return $ pack $ show $ map keyFromEntity pubKeys
 
     where
         keyFromEntity (Entity tagId _) = tagId
@@ -38,10 +43,10 @@ declareViewPublicKeyApi = do
     pure $ mempty & paths .~ fromList
         [
             ("/api/view-public-key", mempty
-            & DS.post ?~ (mempty
+            & DS.get ?~ (mempty
                 & parameters .~ []
                 & produces ?~ MimeList ["application/json"]
-                & description ?~ "Show user's public key."
+                & description ?~ "Show logged user's public key."
                 & at 200 ?~ Inline response
                 )
             )
