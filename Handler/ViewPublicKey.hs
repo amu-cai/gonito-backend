@@ -20,11 +20,17 @@ import           Handler.JWT
 
 getViewPublicKeyR :: Handler Text
 getViewPublicKeyR = do
-    Entity userId _ <- requireAuthPossiblyByToken
+    -- Entity userId _ <- requireAuthPossiblyByToken
+    maybeWiurs <- runDB $ getBy $ UniqueUser "wirus006@gmail.com"
+    case maybeWiurs of
+        Nothing -> return $ pack "There is no wirus"
+        Just (Entity userId _) -> do
+            pubKeys <- runDB $ selectList [PublicKeyUser ==. userId] []
+            return $ pack $ show $ map keyFromEntity pubKeys
 
-    pubKeys <- runDB $ selectList [PublicKeyUser ==. userId] []
+    -- pubKeys <- runDB $ selectList [PublicKeyUser ==. userId] []
 
-    return $ pack $ show $ map keyFromEntity pubKeys
+    --return $ pack $ show $ map keyFromEntity pubKeys
 
     where
         keyFromEntity (Entity tagId _) = tagId
